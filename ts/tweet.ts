@@ -23,34 +23,73 @@ class Tweet {
 
     //returns a boolean, whether the text includes any content written by the person tweeting.
     get written(): boolean {
-        // Strip URLs and hashtags
-        let stripped = this.text.replace(/https?:\/\/\S+/g, "")
-                                .replace(/#\S+/g, "")
-                                .trim();
-
-        // Remove default RunKeeper phrases
-        const defaults = [
-            "just completed", "just posted", "check it out",
-            "watch my run right now", "achieved a new personal record",
-            "with @runkeeper"
-        ];
-        for (const phrase of defaults) {
-            stripped = stripped.replace(new RegExp(phrase, "ig"), "");
-        }
-
-        // If meaningful characters remain, it’s user-written
-        return stripped.replace(/[^a-zA-Z0-9]/g, "").length > 0;
-    }
-
-    get writtenText():string {
-        if (!this.written) return "";
-
-        return this.text
+        // Normalize and clean tweet text (remove URLs, hashtags, mentions)
+        let cleaned = this.text.toLowerCase()
             .replace(/https?:\/\/\S+/g, "")
             .replace(/#\S+/g, "")
-            .replace(/with @runkeeper/gi, "")
-            .replace(/check it out/gi, "")
+            .replace(/@\S+/g, "")
             .trim();
+
+        // Direct signal — user-added dash comment at the end (e.g., " - felt good today")
+        const dash = cleaned.match(/-\s*([^#@]+?)\s*$/);
+        if (dash && /[a-z]{3,}/i.test(dash[1])) return true;
+
+        // Remove default RunKeeper structure
+        let s = cleaned.toLowerCase();
+        s = s.replace(/^\s*just\s+(completed|posted)\b.*?\b(\d+(\.\d+)?)\s*(km|mi)\b\s+\w+\b/gi, "");
+        s = s.replace(/^\s*just\s+(completed|posted)\b.*?\b(run|walk|ride|ride|bike|cycling|hike|swim|yoga|workout)\b/gi, "");
+
+        // Remove common trailing phases found in auto-generated tweets  
+        s = s.replace(/\bwith\s+@?runkeeper\b\.?/gi, "")
+            .replace(/\bcheck\s+it\s+out!?/gi, "")
+            .replace(/\blive\b/gi, "")
+            .replace(/\bright\s+now\b/gi, "")
+            .replace(/\bachieved\s+a\s+new\s+personal\s+record\b/gi, "")
+            .replace(/\bnew\s+personal\s+record\b/gi, "");
+
+        // Remove numbers, units, punctuation, and extra spaces
+        s = s.replace(/\b\d+(\.\d+)?\s*(km|mi)\b/gi, "")
+            .replace(/[^\p{L}\s]/gu, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        // Filter out short or generic text that likely isn't written by the user
+        const stop = new Set([
+            "a","an","the","my","run","runs","running","walk","walked","ride","bike","biked",
+            "activity","workout","morning","afternoon","evening","good","nice","great","slow","fast"
+        ]);
+        const words = s.split(" ").filter(w => w.length);
+        const informative = words.filter(w => !stop.has(w));
+
+        // Require at least 3 non-generic words to count as user-written text
+        return informative.length >= 3;
+    }
+
+    get writtenText(): string {
+        // Clean text
+        const cleaned = this.text.replace(/https?:\/\/\S+/gi, "")
+            .replace(/#\S+/g, "")
+            .replace(/@\S+/g, "")
+            .trim();
+        
+        // If a dash comment is found, return that as user-written text
+        const dash = cleaned.match(/-\s*([^#@]+?)\s*$/);
+        if (dash && /[a-z]{3,}/i.test(dash[1])) return dash[1].trim();
+
+        // Otherwise, remove all default RunKeeper phrases
+        let s = cleaned
+            .replace(/^\s*just\s+(completed|posted)\b.*?\b(\d+(\.\d+)?)\s*(km|mi)\b\s+\w+\b/gi, "")
+            .replace(/^\s*just\s+(completed|posted)\b.*?\b(run|walk|ride|bike|cycling|hike|swim|yoga|workout)\b/gi, "")
+            .replace(/\bwith\s+@?runkeeper\b\.?/gi, "")
+            .replace(/\bcheck\s+it\s+out!?/gi, "")
+            .replace(/\bright\s+now\b/gi, "")
+            .replace(/\bachieved\s+a\s+new\s+personal\s+record\b/gi, "")
+            .replace(/\bnew\s+personal\s+record\b/gi, "")
+            .replace(/\b\d+(\.\d+)?\s*(km|mi)\b/gi, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        
+        return s;
     }
 
     get activityType():string {
