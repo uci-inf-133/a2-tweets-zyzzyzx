@@ -40,7 +40,7 @@ function parseTweets(runkeeper_tweets) {
 	const fmt = x => math.format(x, { notation: 'fixed', precision: 2});
 
 	// Update counts
-	document.querySelector('.completedEvents').textContent = completed;
+	document.querySelectorAll('.completedEvents').forEach(e => e.textContent = completed);
 	document.querySelector('.completedEventsPct').textContent = fmt((completed/total)*100) + '%';
 	document.querySelector('.liveEvents').textContent = live;
 	document.querySelector('.liveEventsPct').textContent = fmt((live/total)*100) + '%';
