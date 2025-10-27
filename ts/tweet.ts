@@ -92,13 +92,21 @@ class Tweet {
         return s;
     }
 
-    get activityType():string {
+    // Extract the type of physical activity (running, biking, walking, etc.)
+    get activityType(): string {
         if (this.source !== "completed_event") return "unknown";
-        const match = this.text.toLowerCase().match(/(\d+(\.\d+)?)\s*(km|mi)\s+(\w+)/);
-        if (match && match[4]) return match[4];
-        // Fallback if not matched (some tweets say "activity" instead)
-        const alt = this.text.toLowerCase().match(/\s(a|an)\s(\w+)\s(with|in|on)/);
-        return alt && alt[2] ? alt[2] : "unknown";
+
+        const lower = this.text.toLowerCase();
+
+        // Regex: find the word immediately following the distance + unit
+        const match = lower.match(/\b\d+(\.\d+)?\s*(km|mi)\s+([a-z]+)/);
+        if (match && match[3]) return match[3];
+
+        // Fallback patterns (e.g., “just completed a run”)
+        const alt = lower.match(/just\s+(completed|posted)\s+(a|an)?\s*(\w+)/);
+        if (alt && alt[3]) return alt[3];
+
+        return "unknown";
     }
 
     get distance():number {
