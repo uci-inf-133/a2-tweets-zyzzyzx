@@ -124,10 +124,29 @@ class Tweet {
         const href = link ? link[0] : "#";
         const userText = this.writtenText || "(no user text)";
         const type = this.activityType;
+        const sentiment = getSentiment(this.writtenText);
         return `<tr>
                     <td>${rowNumber}</td>
                     <td>${type}</td>
                     <td><a href="${href}" target="_blank">${userText}</a></td>
+                        <td>${sentiment}</td> <!-- ✅ New column -->
                 </tr>`;
     }
+}
+
+// Sentiment helper function 
+function getSentiment(text: string): string {
+    const positives = ["great", "awesome", "good", "amazing", "strong", "fast", "happy", "fantastic", "love"];
+    const negatives = ["tired", "sore", "bad", "hurt", "slow", "weak", "terrible", "awful"];
+    let score = 0;
+
+    const words = text.toLowerCase().split(/\W+/);
+    for (const w of words) {
+        if (positives.includes(w)) score++;
+        else if (negatives.includes(w)) score--;
+    }
+
+    if (score > 0) return "😁 Positive";
+    if (score < 0) return "☹️ Negative";
+    return "😐 Neutral";
 }

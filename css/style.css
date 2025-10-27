@@ -17,3 +17,11 @@ a:active {
 	color: #B32B00;
 	text-decoration: underline;
 }
+
+.sentiment {
+	margin-left: 10px;
+	font-weight: bold;
+}
+.sentiment:contains("Positive") { color: green; }
+.sentiment:contains("Negative") { color: red; }
+.sentiment:contains("Neutral")  { color: gray; }
